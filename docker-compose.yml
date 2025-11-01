@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: restaurant-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - restaurant-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: restaurant-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongo:27017/restaurant
+      - JWT_SECRET=restaurant_jwt_secret_change_in_production
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_key
+      - CRM_URL=http://crm:4001
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - restaurant-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  crm:
+    build:
+      context: ./crm
+      dockerfile: Dockerfile
+    container_name: restaurant-crm
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - MONGO_URI=mongodb://mongo:27017/crm
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - restaurant-network
+    volumes:
+      - ./crm:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: restaurant-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+    depends_on:
+      - backend
+      - crm
+    networks:
+      - restaurant-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+networks:
+  restaurant-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+

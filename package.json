@@ -1,0 +1,28 @@
+{
+  "name": "restaurant-app",
+  "version": "1.0.0",
+  "description": "Sistema completo de pedidos y pagos para restaurantes",
+  "scripts": {
+    "install:all": "npm run install:backend && npm run install:crm && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:crm": "cd crm && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "seed": "cd backend && node src/scripts/seedData.js",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:crm": "cd crm && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "restaurant",
+    "pos",
+    "crm",
+    "payments",
+    "qr-menu"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
