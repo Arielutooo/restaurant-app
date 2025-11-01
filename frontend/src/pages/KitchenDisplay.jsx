@@ -230,7 +230,7 @@ function KitchenDisplay() {
                 className="card"
                 style={{
                   border: '2px solid var(--success)',
-                  backgroundColor: '#f0fff4'
+                  backgroundColor: 'var(--success)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -238,7 +238,7 @@ function KitchenDisplay() {
                     Mesa {order.tableId?.number}
                   </h3>
                   <span style={{
-                    backgroundColor: var(--success),
+                    backgroundColor: 'var(--success)',
                     color: 'white',
                     padding: '0.25rem 0.75rem',
                     borderRadius: '20px',
