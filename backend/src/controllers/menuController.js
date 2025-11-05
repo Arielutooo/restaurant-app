@@ -4,7 +4,14 @@ export const getMenu = async (req, res) => {
   try {
     const { category } = req.query;
     
-    const filter = { available: true, stock: { $gt: 0 } };
+    const filter = { 
+      active: true,
+      available: true,
+      outOfStock: false,
+      softDelete: false,
+      stock: { $gt: 0 }
+    };
+    
     if (category) {
       filter.category = category;
     }

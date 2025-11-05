@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import MenuItem from '../models/MenuItem.js';
 import Staff from '../models/Staff.js';
 import Table from '../models/Table.js';
+import Order from '../models/Order.js';
+import Payment from '../models/Payment.js';
 
 dotenv.config();
 
@@ -16,6 +18,8 @@ const seedDatabase = async () => {
     await MenuItem.deleteMany({});
     await Staff.deleteMany({});
     await Table.deleteMany({});
+    await Order.deleteMany({});
+    await Payment.deleteMany({});
 
     // Seed Menu Items
     const menuItems = [
@@ -108,31 +112,49 @@ const seedDatabase = async () => {
     await MenuItem.insertMany(menuItems);
     console.log('✅ Menu items creados');
 
-    // Seed Staff (PIN: 1234 para demo)
+    // Seed Staff (PIN: 1234, Password: admin123 para owner)
     const hashedPin = await bcrypt.hash('1234', 10);
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    
     const staff = [
       {
+        name: 'Dueño Restaurant',
+        email: 'owner@restaurant.com',
+        role: 'owner',
+        pinHash: hashedPin,
+        passwordHash: hashedPassword,
+        active: true
+      },
+      {
+        name: 'Admin Sistema',
+        email: 'admin@restaurant.com',
+        role: 'admin',
+        pinHash: hashedPin,
+        passwordHash: hashedPassword,
+        active: true
+      },
+      {
         name: 'Juan Pérez',
+        email: 'waiter@restaurant.com',
         role: 'waiter',
         pinHash: hashedPin,
+        passwordHash: hashedPassword,
         active: true
       },
       {
         name: 'María González',
+        email: 'kitchen@restaurant.com',
         role: 'kitchen',
         pinHash: hashedPin,
-        active: true
-      },
-      {
-        name: 'Admin',
-        role: 'admin',
-        pinHash: hashedPin,
+        passwordHash: hashedPassword,
         active: true
       }
     ];
 
-    await Staff.insertMany(staff);
-    console.log('✅ Staff creado (PIN demo: 1234)');
+    const createdStaff = await Staff.insertMany(staff);
+    console.log('✅ Staff creado');
+    console.log('   Owner: owner@restaurant.com / admin123');
+    console.log('   PIN para todos: 1234');
 
     // Seed Tables
     const tables = [];
@@ -144,15 +166,110 @@ const seedDatabase = async () => {
       });
     }
 
-    await Table.insertMany(tables);
+    const createdTables = await Table.insertMany(tables);
     console.log('✅ 20 mesas creadas');
+
+    // Seed órdenes históricas (últimos 30 días)
+    console.log('\n📊 Generando datos históricos de ventas...');
+    const createdMenuItems = await MenuItem.find();
+    
+    const historicalOrders = [];
+    const historicalPayments = [];
+    
+    const now = new Date();
+    const methods = ['webpay', 'applepay', 'googlepay', 'pos'];
+    
+    // Generar 50 órdenes aleatorias en los últimos 30 días
+    for (let i = 0; i < 50; i++) {
+      // Fecha aleatoria en los últimos 30 días
+      const daysAgo = Math.floor(Math.random() * 30);
+      const hoursAgo = Math.floor(Math.random() * 24);
+      const createdAt = new Date(now);
+      createdAt.setDate(createdAt.getDate() - daysAgo);
+      createdAt.setHours(hoursAgo, Math.floor(Math.random() * 60), 0, 0);
+
+      // Mesa aleatoria
+      const randomTable = createdTables[Math.floor(Math.random() * createdTables.length)];
+
+      // 2-5 items aleatorios
+      const numItems = Math.floor(Math.random() * 4) + 2;
+      const orderItems = [];
+      let total = 0;
+
+      for (let j = 0; j < numItems; j++) {
+        const randomItem = createdMenuItems[Math.floor(Math.random() * createdMenuItems.length)];
+        const quantity = Math.floor(Math.random() * 3) + 1;
+        
+        orderItems.push({
+          itemId: randomItem._id,
+          quantity,
+          price: randomItem.price,
+          status: 'served'
+        });
+        
+        total += randomItem.price * quantity;
+      }
+
+      // Propina aleatoria (0, 10%, 15% o 20%)
+      const tipOptions = [0, 0.10, 0.15, 0.20];
+      const tipPercent = tipOptions[Math.floor(Math.random() * tipOptions.length)];
+      const tip = Math.round(total * tipPercent);
+
+      const order = {
+        tableId: randomTable._id,
+        sessionId: `session_${i}_${Date.now()}`,
+        items: orderItems,
+        status: 'paid',
+        total,
+        tip,
+        paymentMethod: methods[Math.floor(Math.random() * methods.length)],
+        approvedBy: createdStaff[2]._id, // Waiter
+        servedAt: new Date(createdAt.getTime() + 20 * 60000), // +20 min
+        paidAt: new Date(createdAt.getTime() + 30 * 60000), // +30 min
+        createdAt,
+        updatedAt: new Date(createdAt.getTime() + 30 * 60000)
+      };
+
+      historicalOrders.push(order);
+
+      // Crear pago correspondiente
+      const payment = {
+        orderId: null, // Se actualizará después
+        method: order.paymentMethod,
+        amount: total,
+        tip,
+        status: 'success',
+        transactionId: `TXN_${Date.now()}_${i}`,
+        confirmedAt: order.paidAt,
+        createdAt: order.paidAt,
+        updatedAt: order.paidAt
+      };
+
+      historicalPayments.push(payment);
+    }
+
+    // Insertar órdenes
+    const createdOrders = await Order.insertMany(historicalOrders);
+    console.log(`✅ ${createdOrders.length} órdenes históricas creadas`);
+
+    // Actualizar pagos con orderId
+    for (let i = 0; i < historicalPayments.length; i++) {
+      historicalPayments[i].orderId = createdOrders[i]._id;
+    }
+
+    await Payment.insertMany(historicalPayments);
+    console.log(`✅ ${historicalPayments.length} pagos históricos creados`);
 
     console.log('\n🎉 Base de datos inicializada correctamente!\n');
     console.log('📊 Datos creados:');
     console.log(`   - ${menuItems.length} items en el menú`);
-    console.log(`   - ${staff.length} miembros del staff`);
+    console.log(`   - ${createdStaff.length} miembros del staff`);
     console.log(`   - ${tables.length} mesas`);
-    console.log('\n🔐 PIN de prueba para garzón: 1234\n');
+    console.log(`   - ${createdOrders.length} órdenes históricas (últimos 30 días)`);
+    console.log('\n🔐 Credenciales de acceso:');
+    console.log('   Email: owner@restaurant.com');
+    console.log('   Password: admin123');
+    console.log('   PIN (todos): 1234\n');
 
     await mongoose.disconnect();
     process.exit(0);

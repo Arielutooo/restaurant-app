@@ -17,6 +17,15 @@ export const createPayment = async (req, res) => {
       return res.status(400).json({ error: 'Orden ya pagada' });
     }
 
+    // VALIDACIÓN CRÍTICA: Solo se puede pagar si la orden está servida
+    if (order.status !== 'served') {
+      return res.status(409).json({ 
+        error: 'ORDER_NOT_SERVED',
+        message: 'No puedes pagar hasta que tu pedido esté servido',
+        currentStatus: order.status
+      });
+    }
+
     const totalAmount = order.total + (tip || 0);
 
     // Crear registro de pago

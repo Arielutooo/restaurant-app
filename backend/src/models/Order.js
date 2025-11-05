@@ -28,11 +28,16 @@ const orderSchema = new mongoose.Schema({
     notes: {
       type: String,
       default: ''
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'kitchen', 'ready_to_serve', 'served'],
+      default: 'pending'
     }
   }],
   status: {
     type: String,
-    enum: ['pending', 'awaiting_approval', 'kitchen', 'ready', 'served', 'paid', 'cancelled'],
+    enum: ['pending', 'awaiting_approval', 'kitchen', 'ready_to_serve', 'served', 'paid', 'cancelled'],
     default: 'pending'
   },
   total: {
@@ -54,6 +59,10 @@ const orderSchema = new mongoose.Schema({
     ref: 'Staff',
     default: null
   },
+  servedAt: {
+    type: Date,
+    default: null
+  },
   paidAt: {
     type: Date,
     default: null
@@ -61,6 +70,10 @@ const orderSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Índices
+orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ tableId: 1, status: 1 });
 
 export default mongoose.model('Order', orderSchema);
 
