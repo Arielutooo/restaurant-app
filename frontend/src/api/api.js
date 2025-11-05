@@ -116,5 +116,19 @@ export const markItemServed = (orderId, itemId) =>
 export const markOrderServed = (orderId) =>
   api.patch(`/waiter/orders/${orderId}/served`);
 
+// Waiter - Open Tables
+export const getOpenTables = () =>
+  api.get('/waiter/open-tables');
+
+export const getTableOrders = (tableId) =>
+  api.get(`/waiter/table/${tableId}/orders`);
+
+// Order - Add items
+export const getOrderDetails = (orderId) =>
+  api.get(`/order/${orderId}`);
+
+export const addItemsToOrder = (orderId, items, requiresApproval = false) =>
+  api.post(`/order/${orderId}/items`, { items, requiresApproval });
+
 export default api;
 

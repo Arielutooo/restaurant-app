@@ -8,6 +8,8 @@ import * as ownerMenuController from '../controllers/ownerMenuController.js';
 import * as ownerAnalyticsController from '../controllers/ownerAnalyticsController.js';
 import * as kitchenController from '../controllers/kitchenController.js';
 import * as waiterController from '../controllers/waiterController.js';
+import * as waiterOpenTablesController from '../controllers/waiterOpenTablesController.js';
+import * as orderAddItemsController from '../controllers/orderAddItemsController.js';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -29,6 +31,8 @@ router.post('/cart/validate', menuController.validateCart);
 // Order routes (public/client)
 router.post('/order', orderController.createOrder);
 router.post('/order/approve', orderController.approveOrder);
+router.get('/order/:orderId', orderAddItemsController.getOrderDetails);
+router.post('/order/:orderId/items', orderAddItemsController.addItemsToOrder);
 
 // Payment routes
 router.post('/payment/create', paymentController.createPayment);
@@ -63,6 +67,8 @@ router.patch('/kitchen/orders/:orderId/ready', requireAuth, requireRole(['kitche
 // =============== WAITER ROUTES ===============
 
 router.get('/waiter/queue', requireAuth, requireRole(['waiter', 'admin']), waiterController.getQueue);
+router.get('/waiter/open-tables', requireAuth, requireRole(['waiter', 'admin']), waiterOpenTablesController.getOpenTables);
+router.get('/waiter/table/:tableId/orders', requireAuth, requireRole(['waiter', 'admin']), waiterOpenTablesController.getTableOrders);
 router.patch('/waiter/orders/:orderId/items/:itemId/served', requireAuth, requireRole(['waiter', 'admin']), waiterController.markItemServed);
 router.patch('/waiter/orders/:orderId/served', requireAuth, requireRole(['waiter', 'admin']), waiterController.markOrderServed);
 

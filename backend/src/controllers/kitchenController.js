@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import crmService from '../services/crmService.js';
+import { emitOrderUpdated, emitItemStatusUpdated, emitToStaff } from '../utils/socketEvents.js';
 
 export const getKitchenOrders = async (req, res) => {
   try {
@@ -52,8 +53,28 @@ export const markItemReady = async (req, res) => {
 
     await order.save();
 
+    // Populate para incluir en eventos
+    await order.populate('tableId');
+    await order.populate('items.itemId');
+
     // Enviar evento al CRM
     await crmService.trackOrderStatusChange(orderId, 'kitchen', 'ready_to_serve');
+
+    // Emitir eventos WebSocket
+    emitItemStatusUpdated(orderId, itemId, 'ready_to_serve');
+    
+    if (allReady) {
+      emitOrderUpdated(orderId, {
+        status: order.status,
+        items: order.items
+      });
+      
+      // Notificar a garzones
+      emitToStaff('waiter', 'order_ready', {
+        orderId: order._id,
+        tableNumber: order.tableId?.number
+      });
+    }
 
     res.json({
       success: true,
@@ -83,8 +104,24 @@ export const markOrderReady = async (req, res) => {
     order.status = 'ready_to_serve';
     await order.save();
 
+    // Populate para incluir en eventos
+    await order.populate('tableId');
+    await order.populate('items.itemId');
+
     // Enviar evento al CRM
     await crmService.trackOrderStatusChange(orderId, 'kitchen', 'ready_to_serve');
+
+    // Emitir eventos WebSocket
+    emitOrderUpdated(orderId, {
+      status: order.status,
+      items: order.items
+    });
+
+    // Notificar a garzones
+    emitToStaff('waiter', 'order_ready', {
+      orderId: order._id,
+      tableNumber: order.tableId?.number
+    });
 
     res.json({
       success: true,

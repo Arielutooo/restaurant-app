@@ -1,31 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { getKitchenOrders, updateOrderStatus } from '../api/api';
-import { Clock, CheckCircle, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getKitchenOrdersNew, markOrderReady } from '../api/api';
+import { Clock, CheckCircle, RefreshCw, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 function KitchenDisplay() {
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated, hasRole, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Esperar a que termine la carga de autenticación
+    if (authLoading) return;
+
+    // Verificar autenticación
+    if (!isAuthenticated) {
+      navigate('/staff/login', { state: { from: '/kitchen' } });
+      return;
+    }
+
+    // Verificar rol - si no tiene el rol correcto, hacer logout y pedir login
+    if (!hasRole(['kitchen', 'admin'])) {
+      alert(`No tienes permisos para acceder a la cocina.\nTu rol actual es: ${user?.role}\n\nPor favor inicia sesión con una cuenta de cocina.`);
+      logout(); // Cerrar sesión del usuario incorrecto
+      navigate('/staff/login', { state: { from: '/kitchen' } });
+      return;
+    }
+
     loadOrders();
     const interval = setInterval(loadOrders, 3000); // Auto-refresh cada 3s
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, hasRole, navigate, authLoading, user, logout]);
 
   const loadOrders = async () => {
     try {
-      const response = await getKitchenOrders();
+      const response = await getKitchenOrdersNew();
       setOrders(response.data.orders);
       setLoading(false);
     } catch (err) {
       console.error('Error cargando órdenes:', err);
+      if (err.response?.status === 401) {
+        logout();
+        navigate('/staff/login', { state: { from: '/kitchen' } });
+      }
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (orderId, newStatus) => {
+  const handleLogout = () => {
+    if (confirm('¿Cerrar sesión?')) {
+      logout();
+      navigate('/staff/login');
+    }
+  };
+
+  const handleMarkReady = async (orderId) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await markOrderReady(orderId);
       loadOrders();
     } catch (err) {
       alert('Error al actualizar estado: ' + err.message);
@@ -59,7 +91,7 @@ function KitchenDisplay() {
     return minutes;
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="container">
         <div className="loading">
@@ -70,7 +102,7 @@ function KitchenDisplay() {
   }
 
   const kitchenOrders = orders.filter(o => o.status === 'kitchen');
-  const readyOrders = orders.filter(o => o.status === 'ready');
+  const readyOrders = orders.filter(o => o.status === 'ready_to_serve');
 
   return (
     <div className="container" style={{ paddingTop: '1rem', paddingBottom: '2rem' }}>
@@ -80,14 +112,31 @@ function KitchenDisplay() {
         alignItems: 'center',
         marginBottom: '1.5rem'
       }}>
-        <h1 style={{ fontSize: '1.5rem' }}>🍳 Cocina (KDS)</h1>
-        <button
-          className="btn btn-outline"
-          onClick={loadOrders}
-          style={{ padding: '0.5rem 1rem' }}
-        >
-          <RefreshCw size={18} />
-        </button>
+        <div>
+          <h1 style={{ fontSize: '1.5rem' }}>🍳 Cocina (KDS)</h1>
+          {user && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+              {user.name} ({user.role})
+            </p>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            className="btn btn-outline"
+            onClick={loadOrders}
+            style={{ padding: '0.5rem 1rem' }}
+          >
+            <RefreshCw size={18} />
+          </button>
+          <button
+            className="btn btn-outline"
+            onClick={handleLogout}
+            style={{ padding: '0.5rem 1rem' }}
+            title="Cerrar sesión"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </div>
 
       {/* En preparación */}
@@ -187,10 +236,10 @@ function KitchenDisplay() {
 
                   <button
                     className="btn btn-success btn-full"
-                    onClick={() => handleStatusChange(order._id, 'ready')}
+                    onClick={() => handleMarkReady(order._id)}
                   >
                     <CheckCircle size={18} />
-                    Marcar como listo
+                    Listo para servir
                   </button>
                 </div>
               );
@@ -261,12 +310,16 @@ function KitchenDisplay() {
                   ))}
                 </div>
 
-                <button
-                  className="btn btn-outline btn-full"
-                  onClick={() => handleStatusChange(order._id, 'served')}
-                >
-                  Marcar como servido
-                </button>
+                <div style={{ 
+                  padding: '1rem',
+                  backgroundColor: 'var(--success)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  fontWeight: 'bold'
+                }}>
+                  ✓ Listo - Esperando garzón
+                </div>
               </div>
             ))}
           </div>

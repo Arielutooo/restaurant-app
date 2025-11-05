@@ -9,11 +9,14 @@ import Home from './pages/Home';
 import TableSession from './pages/TableSession';
 import Menu from './pages/Menu';
 import Cart from './pages/Cart';
+import OrderStatus from './pages/OrderStatus';
 import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
 import WaiterPanel from './pages/WaiterPanel';
+import WaiterOpenTables from './pages/WaiterOpenTables';
 import KitchenDisplay from './pages/KitchenDisplay';
 import AdminQR from './pages/AdminQR';
+import StaffLogin from './pages/StaffLogin';
 
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin';
@@ -32,9 +35,14 @@ function App() {
               <Route path="/table/:tableNumber" element={<TableSession />} />
               <Route path="/menu" element={<Menu />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/order-status" element={<OrderStatus />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
+              
+              {/* Staff Routes */}
+              <Route path="/staff/login" element={<StaffLogin />} />
               <Route path="/waiter" element={<WaiterPanel />} />
+              <Route path="/waiter/tables" element={<WaiterOpenTables />} />
               <Route path="/kitchen" element={<KitchenDisplay />} />
               <Route path="/admin/qr" element={<AdminQR />} />
               

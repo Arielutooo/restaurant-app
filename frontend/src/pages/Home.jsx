@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { QrCode, ChefHat, Users, BarChart } from 'lucide-react';
+import { QrCode, ChefHat, Users, BarChart, Lock } from 'lucide-react';
 
 function Home() {
   return (
@@ -15,6 +15,18 @@ function Home() {
       </div>
 
       <div style={{ display: 'grid', gap: '1rem' }}>
+        <Link to="/owner/login" className="card" style={{ display: 'block', backgroundColor: 'var(--accent)', color: 'white' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Lock size={40} color="white" />
+            <div>
+              <h3 style={{ marginBottom: '0.5rem' }}>Acceso Owner</h3>
+              <p style={{ opacity: 0.9, fontSize: '0.9rem' }}>
+                Panel de administración y analytics
+              </p>
+            </div>
+          </div>
+        </Link>
+
         <Link to="/table/1" className="card" style={{ display: 'block' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <QrCode size={40} color="var(--accent)" />

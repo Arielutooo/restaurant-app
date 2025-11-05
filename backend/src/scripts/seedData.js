@@ -169,103 +169,17 @@ const seedDatabase = async () => {
     const createdTables = await Table.insertMany(tables);
     console.log('✅ 20 mesas creadas');
 
-    // Seed órdenes históricas (últimos 30 días)
-    console.log('\n📊 Generando datos históricos de ventas...');
-    const createdMenuItems = await MenuItem.find();
-    
-    const historicalOrders = [];
-    const historicalPayments = [];
-    
-    const now = new Date();
-    const methods = ['webpay', 'applepay', 'googlepay', 'pos'];
-    
-    // Generar 50 órdenes aleatorias en los últimos 30 días
-    for (let i = 0; i < 50; i++) {
-      // Fecha aleatoria en los últimos 30 días
-      const daysAgo = Math.floor(Math.random() * 30);
-      const hoursAgo = Math.floor(Math.random() * 24);
-      const createdAt = new Date(now);
-      createdAt.setDate(createdAt.getDate() - daysAgo);
-      createdAt.setHours(hoursAgo, Math.floor(Math.random() * 60), 0, 0);
-
-      // Mesa aleatoria
-      const randomTable = createdTables[Math.floor(Math.random() * createdTables.length)];
-
-      // 2-5 items aleatorios
-      const numItems = Math.floor(Math.random() * 4) + 2;
-      const orderItems = [];
-      let total = 0;
-
-      for (let j = 0; j < numItems; j++) {
-        const randomItem = createdMenuItems[Math.floor(Math.random() * createdMenuItems.length)];
-        const quantity = Math.floor(Math.random() * 3) + 1;
-        
-        orderItems.push({
-          itemId: randomItem._id,
-          quantity,
-          price: randomItem.price,
-          status: 'served'
-        });
-        
-        total += randomItem.price * quantity;
-      }
-
-      // Propina aleatoria (0, 10%, 15% o 20%)
-      const tipOptions = [0, 0.10, 0.15, 0.20];
-      const tipPercent = tipOptions[Math.floor(Math.random() * tipOptions.length)];
-      const tip = Math.round(total * tipPercent);
-
-      const order = {
-        tableId: randomTable._id,
-        sessionId: `session_${i}_${Date.now()}`,
-        items: orderItems,
-        status: 'paid',
-        total,
-        tip,
-        paymentMethod: methods[Math.floor(Math.random() * methods.length)],
-        approvedBy: createdStaff[2]._id, // Waiter
-        servedAt: new Date(createdAt.getTime() + 20 * 60000), // +20 min
-        paidAt: new Date(createdAt.getTime() + 30 * 60000), // +30 min
-        createdAt,
-        updatedAt: new Date(createdAt.getTime() + 30 * 60000)
-      };
-
-      historicalOrders.push(order);
-
-      // Crear pago correspondiente
-      const payment = {
-        orderId: null, // Se actualizará después
-        method: order.paymentMethod,
-        amount: total,
-        tip,
-        status: 'success',
-        transactionId: `TXN_${Date.now()}_${i}`,
-        confirmedAt: order.paidAt,
-        createdAt: order.paidAt,
-        updatedAt: order.paidAt
-      };
-
-      historicalPayments.push(payment);
-    }
-
-    // Insertar órdenes
-    const createdOrders = await Order.insertMany(historicalOrders);
-    console.log(`✅ ${createdOrders.length} órdenes históricas creadas`);
-
-    // Actualizar pagos con orderId
-    for (let i = 0; i < historicalPayments.length; i++) {
-      historicalPayments[i].orderId = createdOrders[i]._id;
-    }
-
-    await Payment.insertMany(historicalPayments);
-    console.log(`✅ ${historicalPayments.length} pagos históricos creados`);
+    // NO generar órdenes históricas - métricas desde 0
+    console.log('\n📊 Métricas configuradas para empezar desde cero');
+    console.log('💡 Las métricas se actualizarán en tiempo real conforme se generen pedidos');
+    console.log('   (No se generaron datos históricos)');
 
     console.log('\n🎉 Base de datos inicializada correctamente!\n');
     console.log('📊 Datos creados:');
     console.log(`   - ${menuItems.length} items en el menú`);
     console.log(`   - ${createdStaff.length} miembros del staff`);
-    console.log(`   - ${tables.length} mesas`);
-    console.log(`   - ${createdOrders.length} órdenes históricas (últimos 30 días)`);
+    console.log(`   - ${createdTables.length} mesas`);
+    console.log(`   - 0 órdenes históricas (métricas desde cero)`);
     console.log('\n🔐 Credenciales de acceso:');
     console.log('   Email: owner@restaurant.com');
     console.log('   Password: admin123');

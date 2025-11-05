@@ -24,7 +24,8 @@ export const AuthProvider = ({ children }) => {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      // Verificar que el token siga siendo válido
+      setLoading(false);
+      // Verificar que el token siga siendo válido (en background)
       verifyToken(storedToken);
     } else {
       setLoading(false);
@@ -35,11 +36,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await getMe(authToken);
       setUser(response.data.staff);
-      setLoading(false);
     } catch (error) {
       // Token inválido, limpiar
       logout();
-      setLoading(false);
     }
   };
 

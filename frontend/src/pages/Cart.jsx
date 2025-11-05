@@ -33,8 +33,13 @@ function Cart() {
 
       clearCart();
       
-      // Redirigir a pago
-      navigate('/payment', { state: { orderId: order._id } });
+      // Redirigir a pantalla de estado del pedido
+      navigate('/order-status', { 
+        state: { 
+          orderId: order._id,
+          orderStatus: order.status 
+        } 
+      });
     } catch (err) {
       alert('Error al crear el pedido: ' + err.message);
       setLoading(false);

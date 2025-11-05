@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogIn } from 'lucide-react';
+import { LogIn, ArrowLeft } from 'lucide-react';
 
 function OwnerLogin() {
   const navigate = useNavigate();
@@ -33,7 +33,16 @@ function OwnerLogin() {
   };
 
   return (
-    <div className="container" style={{ paddingTop: '3rem', maxWidth: '400px' }}>
+    <div className="container" style={{ paddingTop: '2rem', maxWidth: '400px' }}>
+      <button 
+        className="btn btn-outline"
+        onClick={() => navigate('/')}
+        style={{ marginBottom: '1rem' }}
+      >
+        <ArrowLeft size={18} />
+        Volver
+      </button>
+
       <div className="card">
         <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>
           🔐 Acceso Owner
@@ -48,6 +57,7 @@ function OwnerLogin() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="owner@restaurant.com"
               required
               style={{
                 width: '100%',
@@ -66,6 +76,7 @@ function OwnerLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
               required
               style={{
                 width: '100%',
@@ -99,7 +110,7 @@ function OwnerLogin() {
         </form>
 
         <div className="card" style={{ marginTop: '1rem', backgroundColor: 'var(--secondary)' }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', textAlign: 'center' }}>
             💡 Demo: owner@restaurant.com / admin123
           </p>
         </div>

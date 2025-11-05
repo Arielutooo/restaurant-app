@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import crmService from '../services/crmService.js';
+import { emitOrderUpdated, emitItemStatusUpdated } from '../utils/socketEvents.js';
 
 export const getQueue = async (req, res) => {
   try {
@@ -53,9 +54,25 @@ export const markItemServed = async (req, res) => {
 
     await order.save();
 
+    // Populate para incluir en eventos
+    await order.populate('tableId');
+    await order.populate('items.itemId');
+
     // Enviar evento al CRM
     if (allServed) {
       await crmService.trackOrderStatusChange(orderId, 'ready_to_serve', 'served');
+    }
+
+    // Emitir eventos WebSocket
+    emitItemStatusUpdated(orderId, itemId, 'served');
+
+    if (allServed) {
+      // EVENTO CRÍTICO: orden completamente servida → habilitar pago
+      emitOrderUpdated(orderId, {
+        status: order.status,
+        servedAt: order.servedAt,
+        items: order.items
+      });
     }
 
     res.json({
@@ -87,8 +104,19 @@ export const markOrderServed = async (req, res) => {
     order.servedAt = new Date();
     await order.save();
 
+    // Populate para incluir en eventos
+    await order.populate('tableId');
+    await order.populate('items.itemId');
+
     // Enviar evento al CRM
     await crmService.trackOrderStatusChange(orderId, order.status, 'served');
+
+    // EVENTO CRÍTICO: orden completamente servida → habilitar pago
+    emitOrderUpdated(orderId, {
+      status: order.status,
+      servedAt: order.servedAt,
+      items: order.items
+    });
 
     res.json({
       success: true,
